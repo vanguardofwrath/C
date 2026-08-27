@@ -47,8 +47,8 @@ void my_free(char memory[MEMORY_SIZE], char allocated[MEMORY_SIZE], void *pointe
     }
 
     int start_index = (char *)pointer - memory - 1;
-    if (start_index < 0 || start_index > MEMORY_SIZE - 1) {
-        return
+    if (start_index < 0 || start_index >= MEMORY_SIZE) {
+        return;
     }
 
     int size = memory[start_index];
