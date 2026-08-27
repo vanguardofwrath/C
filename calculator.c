@@ -32,15 +32,20 @@ int calculate_expression(char *source)
     stack *operator_stack = create_stack(length);
     stack *evalution_stack = create_stack(length);
 
+    free_stack(operator_stack);
+    free_stack(evalution_stack);
+
     return 0;
 }
 
 int main(int argc, char **argv)
 {
-    char *expression = remove_spaces(argv[1]);
-    if (expression == NULL) {
-        return 1;
-    }
+    // char *expression = remove_spaces(argv[1]);
+    // if (expression == NULL) {
+    //     return 1;
+    // }
+
+    char *expression = "4*5+(5+3)/2";
 
     int result = calculate_expression(expression);
     printf("Result:%d\n", result);

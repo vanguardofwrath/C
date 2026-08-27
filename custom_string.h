@@ -69,9 +69,8 @@ void append_string(string *target, string *other)
     {
         int new_capacity = target->capacity * 2;
 
-        if (new_capacity < new_length + 1)
-        {
-            new_capacity = new_length + 1;
+        while (new_capacity < new_length + 1) {
+            new_capacity *= 2;
         }
 
         char *temp = (char *)realloc(target->data, new_capacity * sizeof(char));
@@ -102,14 +101,9 @@ void append_char(string *target, char c)
 
     int new_length = target->length + 1;
 
-    if (new_length + 1 > target->capacity)
+    if (new_length + 1 >= target->capacity)
     {
         int new_capacity = target->capacity * 2;
-
-        if (new_capacity < new_length + 1)
-        {
-            new_capacity = new_length + 1;
-        }
 
         char *temp = (char *)realloc(target->data, new_capacity * sizeof(char));
         if (!temp)
@@ -127,14 +121,6 @@ void append_char(string *target, char c)
     target->data[target->length] = '\0';
 }
 
-char *get_string(string *target) {
-    if (!target) {
-        return NULL;
-    }
-    
-    return target->data;
-}
-
 void print_string(string *target)
 {
     if (!target)
@@ -142,7 +128,7 @@ void print_string(string *target)
         return;
     }
 
-    printf(target->data);
+    printf("%s\n", target->data);
 }
 
 void free_string(string *target)

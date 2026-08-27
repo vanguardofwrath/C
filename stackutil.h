@@ -30,7 +30,7 @@ stack *create_stack(int capacity)
     return s;
 }
 
-int get_length(stack *s) {
+int get_num_items(stack *s) {
     return s->head + 1;
 }
 
@@ -39,24 +39,16 @@ int is_empty(stack *s)
     return s->head == -1;
 }
 
+int is_full(stack *s) {
+    return s->head == s->capacity - 1;
+}
+
 void push(stack *s, void *value)
 {
-    if (s == NULL) {
+    if (s == NULL || is_full(s)) {
         return;
     }
 
-    if (s->head == s->capacity - 1)
-    {
-        int new_capacity = s->capacity *= 2;
-        
-        void **temp = (void **)realloc(s->items, new_capacity * sizeof(void *));
-        if (temp == NULL) {
-            return;
-        }
-
-        s->capacity = new_capacity;
-        s->items = temp;
-    }
     s->items[++s->head] = value;
 }
 
