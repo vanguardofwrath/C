@@ -12,11 +12,6 @@ typedef struct
     int capacity;
 } string;
 
-typedef struct {
-    string **list;
-
-} string_list;
-
 string *create_string(const char *start_string)
 {
     string *new_string = (string *)malloc(sizeof(string));
@@ -86,6 +81,44 @@ void append_string(string *target, string *other)
     for (int i = 0; i < other->length; i++)
     {
         target->data[target->length + i] = other->data[i];
+    }
+
+    target->length = new_length;
+    target->data[target->length] = '\0';
+}
+
+void append_c_string(string *target, const char* other) {
+    if (!target || !other)
+    {
+        return;
+    }
+
+    int other_length = get_string_length(other);
+
+    int new_length = target->length + other_length;
+
+    if (new_length >= target->capacity)
+    {
+        int new_capacity = target->capacity * 2;
+
+        while (new_capacity < new_length + 1)
+        {
+            new_capacity *= 2;
+        }
+
+        char *temp = (char *)realloc(target->data, new_capacity * sizeof(char));
+        if (!temp)
+        {
+            return;
+        }
+
+        target->capacity = new_capacity;
+        target->data = temp;
+    }
+
+    for (int i = 0; i < other_length; i++)
+    {
+        target->data[target->length + i] = other[i];
     }
 
     target->length = new_length;
