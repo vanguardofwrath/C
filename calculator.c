@@ -95,8 +95,6 @@ double calculate_expression(char *source)
         append_char(output_string, ',');
     }
 
-    print_string(output_string);
-
     for (int i = 0; i < output_string->length; i++)
     {
         char character = output_string->data[i];
@@ -118,8 +116,6 @@ double calculate_expression(char *source)
         {
             double right_operand = double_stack_pop(evalution_stack);
             double left_operand = double_stack_pop(evalution_stack);
-
-            printf("%g %c %g\n", left_operand, character, right_operand);
 
             double result = 0;
 
