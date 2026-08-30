@@ -157,7 +157,7 @@ int main(int argc, char **argv)
     }
 
     double result = calculate_expression(expression);
-    printf("Result:%f\n", result);
+    printf("Result:%g\n", result);
 
     return 0;
 }
