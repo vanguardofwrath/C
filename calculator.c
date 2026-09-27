@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "strutil.h"
-#include "stackutil.h"
-#include "custom_string.h"
+#include "my_stack.h"
+#include "my_string.h"
 
 int ascii_to_number(char ascii)
 {
@@ -40,12 +39,12 @@ int get_precedence(char operator)
 
 double calculate_expression(char *source)
 {
-    int length = get_string_length(source);
+    int length = strlen(source);
 
-    char_stack *operator_stack = create_char_stack(length);
-    double_stack *evalution_stack = create_double_stack(length);
+    CharStack *operator_stack = create_char_stack(length);
+    DoubleStack *evalution_stack = create_double_stack(length);
 
-    string *output_string = create_string(NULL);
+    String *output_string = create_string("");
 
     for (int i = 0; i < length; i++)
     {
@@ -151,12 +150,7 @@ double calculate_expression(char *source)
 
 int main(int argc, char **argv)
 {
-    char *expression = remove_spaces(argv[1]);
-    if (expression == NULL) {
-        return 1;
-    }
-
-    double result = calculate_expression(expression);
+    double result = calculate_expression(argv[1]);
     printf("Result:%g\n", result);
 
     return 0;
