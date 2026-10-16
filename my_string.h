@@ -23,6 +23,7 @@ typedef struct {
 MyString *create_my_string(const char *source);
 void my_string_replace(MyString *string, const char *to_replace, const char *replacement);
 void my_string_insert(MyString *string, const char *to_insert, size_t index);
+bool my_string_is_equal(MyString *string, const char *to_compare);
 void my_string_free(MyString *string);
 
 MyStringList *create_my_string_list(size_t capacity);
@@ -33,6 +34,7 @@ void my_string_list_free(MyStringList *string_list);
 
 bool my_string_regex_contains(MyString *string, const char *pattern);
 MyString *my_string_regex_match(MyString *string, const char *pattern);
+MyStringList *my_string_regex_match_all(MyString *string, const char *pattern) ;
 
 // --------------------------------------------------------------------------------------
 
@@ -115,6 +117,17 @@ void my_string_insert(MyString *string, const char *to_insert, size_t index) {
     memcpy(string->data + index, to_insert, to_insert_length);
 
     string->length = new_length;
+}
+
+bool my_string_is_equal(MyString *string, const char *to_compare) {
+    int i = 0;
+    while (string->data[i] != '\0' || to_compare[i] != '\0') {
+        if (string->data[i] != to_compare[i]) {
+            return 0;
+        }
+        i++;
+    }
+    return 1;
 }
 
 void my_string_free(MyString *string) {
@@ -220,5 +233,49 @@ MyString *my_string_regex_match(MyString *string, const char *pattern) {
     regfree(&regex);
     return to_return;
 }
+
+MyStringList *my_string_regex_match_all(MyString *string, const char *pattern) {
+    MyStringList *matches = create_my_string_list(string->length);
+    if (!matches) {
+        return NULL;
+    }
+
+    regex_t regex;
+    if (regcomp(&regex, pattern, REG_EXTENDED)) {
+        my_string_list_free(matches);
+        return NULL;
+    }
+
+    regmatch_t match;
+    const char *search_start = string->data;
+
+    while (regexec(&regex, search_start, 1, &match, 0) != REG_NOMATCH) {
+        regoff_t start = match.rm_so;
+        regoff_t end = match.rm_eo;
+
+        size_t match_length = (size_t)end - start;
+
+        char *matched_string = malloc((match_length + 1) * sizeof(char));
+        if (!matched_string) {
+            my_string_list_free(matches);
+            regfree(&regex);
+            return NULL;
+        }
+
+        memcpy(matched_string, search_start + start, match_length);
+        matched_string[match_length] = '\0';
+
+        MyString *to_push = create_my_string(matched_string);
+        my_string_list_push(matches, to_push);
+
+        free(matched_string);
+
+        search_start += end;
+    }
+
+    regfree(&regex);
+    return matches;
+}
+
 
 #endif

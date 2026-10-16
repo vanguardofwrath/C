@@ -1,142 +1,86 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <regex.h>
 
 #include "my_stack.h"
 #include "my_string.h"
 
-static inline int character_to_number(char character)
-{
-    return character - '0';
+#define TOKENIZATION_REGEX_PATTERN "[0-9]+\\.?[0-9]*|[[:punct:]]"
+#define NUMBER_REGEX_PATTERN "^[0-9]+(?:\\.[0-9]+)?$"
+
+bool is_number(MyString *string) {
+    return my_string_regex_contains(string, NUMBER_REGEX_PATTERN);
 }
 
-static inline int is_number(char character)
+bool is_operator(MyString *string)
 {
-    return character >= '0' && character <= '9';
+    return my_string_is_equal(string, "*") || my_string_is_equal(string, "/") || my_string_is_equal(string, "+") || my_string_is_equal(string, "-");
 }
 
-static inline int is_operator(char character)
+bool is_left_parentheses(MyString *string)
 {
-    return character == '+' || character == '-' || character == '*' || character == '/';
+    return my_string_is_equal(string, "(")
 }
 
-static inline int get_precedence(char operator)
+bool is_right_parentheses(MyString *string)
 {
-    return (operator == '*' || operator == '/') ? 2 : (operator == '+' || operator == '-') ? 1 : 0;
+    return my_string_is_equal(string, ")")
 }
 
-#define NUMBER_REGEX_PATTERN "^\\d*\\.?\\d+$"
+int get_precedence(MyString *operator)
+{
+    return (my_string_is_equal(operator, "*") || y_string_is_equal(operator, "/")) ? 2 : (my_string_is_equal(operator, "+") || y_string_is_equal(operator, "-")) ? 1 : 0
+}
 
 double calculate_expression(const char *source) {
     MyString *expression = create_my_string(source);
-
-    MyCharStack *operator_stack = create_my_char_stack(expression->length);
-    MyDoubleStack *evalution_stack = create_my_double_stack(expression->length);
-
-    MyStringList *output_list = create_my_string_list(expression->length);
-
-    for (int i = 0; i < expression->length; i++)
-    {;
-        MyString *string = my_string_regex_match(expression, NUMBER_REGEX_PATTERN);
-        if (string) {
-            printf("%s\n", string->data);
-        }
-        // if (is_number(source[i]))
-        // {
-        //     append_char(output_string, source[i]);
-
-        //     while (i + 1 < source_length && is_number(source[i + 1]))
-        //     {
-        //         append_char(output_string, source[i + 1]);
-        //         i++;
-        //     }
-
-        //     append_char(output_string, ',');
-        // }
-        // else if (is_operator(source[i]))
-        // {
-        //     while (char_stack_peek(operator_stack) != '(' && get_precedence(char_stack_peek(operator_stack)) >= get_precedence(source[i]))
-        //     {
-        //         append_char(output_string, char_stack_pop(operator_stack));
-        //         append_char(output_string, ',');
-        //     }
-        //     char_stack_push(operator_stack, source[i]);
-        // }
-        // else if (source[i] == '(')
-        // {
-        //     char_stack_push(operator_stack, source[i]);
-        // }
-        // else if (source[i] == ')')
-        // {
-        //     while (!char_stack_is_empty(operator_stack) && char_stack_peek(operator_stack) != '(')
-        //     {
-        //         append_char(output_string, char_stack_pop(operator_stack));
-        //         append_char(output_string, ',');
-        //     }
-
-        //     if (char_stack_peek(operator_stack) == '(')
-        //     {
-        //         char_stack_pop(operator_stack);
-        //     }
-        // }
+    if (!expression) {
+        printf("Error: Failed to create MyString for the expression.\n");
+        return 0;
     }
 
-    // while (!char_stack_is_empty(operator_stack) && char_stack_peek(operator_stack) != '(')
-    // {
-    //     append_char(output_string, char_stack_pop(operator_stack));
-    //     append_char(output_string, ',');
-    // }
+    MyCharStack *operator_stack = create_my_char_stack(expression->length);
+    if (!operator_stack) {
+        my_string_free(expression);
+        printf("Error: Failed to create operator stack.\n");
+        return 0;
+    }
 
-    // for (int i = 0; i < output_string->length; i++)
-    // {
-    //     char character = output_string->data[i];
+    MyDoubleStack *evalution_stack = create_my_double_stack(expression->length);
+    if (!evalution_stack) {
+        my_string_free(expression);
+        my_char_stack_free(operator_stack);
+        printf("Error: Failed to create evaluation stack.\n");
+        return 0;
+    }
 
-    //     if (is_number(character))
-    //     {
-    //         double number = character_to_number(character);
+    MyStringList *token_list = my_string_regex_match_all(expression, TOKENIZATION_REGEX_PATTERN);
+    if (!token_list) {
+        my_string_free(expression);
+        my_char_stack_free(operator_stack);
+        my_double_stack_free(evalution_stack);
+        printf("Error: Failed to tokenize the expression.\n");
+        return 0;
+    }
 
-    //         while (i + 1 < output_string->length && is_number(output_string->data[i + 1]))
-    //         {
-    //             number *= 10;
-    //             number += character_to_number(output_string->data[i + 1]);
-    //             i++;
-    //         }
+    for (int i = 0; i < token_list->length; i++) {
+        MyString *token = token_list->strings[i];
 
-    //         double_stack_push(evalution_stack, number);
-    //     }
-    //     else if (is_operator(character))
-    //     {
-    //         double right_operand = double_stack_pop(evalution_stack);
-    //         double left_operand = double_stack_pop(evalution_stack);
+        if (is_number(token)) {
 
-    //         double result = 0;
+        }
+        else if(is_operator(token)) {
 
-    //         switch (character)
-    //         {
-    //         case '+':
-    //             result += left_operand + right_operand;
-    //             break;
-    //         case '-':
-    //             result += left_operand - right_operand;
-    //             break;
-    //         case '*':
-    //             result += left_operand * right_operand;
-    //             break;
-    //         case '/':
-    //             result += left_operand / right_operand;
-    //             break;
-    //         }
+        }
+        else if (is_left_parentheses(token)) {
 
-    //         double_stack_push(evalution_stack, result);
-    //     }
-    // }
+        }
+        else if (is_right_parentheses(token)) {
 
-    // double final_result = double_stack_pop(evalution_stack);
+        }
+    }
 
-    // free_char_stack(operator_stack);
-    // free_double_stack(evalution_stack);
-
-    // free_string(output_string);
 
     return 1;
 }
