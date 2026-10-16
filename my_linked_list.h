@@ -1,37 +1,32 @@
-#ifndef MY_LINKED_LIST
-#define MY_LINKED_LIST
+#ifndef MY_LINKED_LIST_H
+#define MY_LINKED_LIST_H
 
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct ListNode {
+typedef struct MyListNode {
     int value;
-    struct ListNode* next;
-} ListNode;
+    struct MyListNode* next;
+} MyListNode;
 
-void print_linked_list(ListNode* head) 
+void my_linked_list_push(MyListNode **head, int value);
+int my_linked_list_pop(MyListNode **head);
+int my_linked_list_peek(MyListNode *head);
+void my_linked_list_push_front(MyListNode **head, int value);
+void my_linked_list_pop_front(MyListNode **head, int value);
+void my_linked_list_print(MyListNode *head);
+void my_linked_list_empty(MyListNode **head);
+
+// --------------------------------------------------------------------------------------
+
+void my_linked_list_push(MyListNode** head, int value) 
 {
     if (!head) 
     {
         return;
     }
 
-    while (head->next) {
-        printf("%d, ", head->value);
-        head = head->next;
-    }
-
-    printf("%d\n",head->value);
-}
-
-void push_linked_list(ListNode** head, int value) 
-{
-    if (!head) 
-    {
-        return;
-    }
-
-    ListNode *node = (ListNode *)malloc(sizeof(ListNode));
+    MyListNode *node = (MyListNode *)malloc(sizeof(MyListNode));
     if (!node)
     {
         return;
@@ -46,7 +41,7 @@ void push_linked_list(ListNode** head, int value)
         return;
     }
 
-    ListNode *temp = *head;
+    MyListNode *temp = *head;
     while (temp->next)
     {
         temp = temp->next;
@@ -55,7 +50,7 @@ void push_linked_list(ListNode** head, int value)
     temp->next = node;
 }
 
-int pop_linked_list(ListNode** head) 
+int my_linked_list_pop(MyListNode** head) 
 {
     if (!head || !(*head)) 
     {
@@ -70,7 +65,7 @@ int pop_linked_list(ListNode** head)
         return value;
     }
 
-    ListNode *temp = *head;
+    MyListNode *temp = *head;
     while (temp->next->next != NULL)
     {
         temp = temp->next;
@@ -82,7 +77,7 @@ int pop_linked_list(ListNode** head)
     return value;
 }
 
-int peek_linked_list(ListNode *head) {
+int my_linked_list_peek(MyListNode *head) {
     if (!head)
     {
         return -1;
@@ -96,13 +91,13 @@ int peek_linked_list(ListNode *head) {
     return head->value;
 }
 
-void push_front_linked_list(ListNode **head, int value) {
+void my_linked_list_push_front(MyListNode **head, int value) {
     if (!head)
     {
         return;
     }
 
-    ListNode *node = (ListNode *)malloc(sizeof(ListNode));
+    MyListNode *node = (MyListNode *)malloc(sizeof(MyListNode));
     if (!node) 
     {
         return;
@@ -113,19 +108,42 @@ void push_front_linked_list(ListNode **head, int value) {
     *head = node;
 }
 
-void pop_front_linked_list(ListNode **head, int value) {
+void my_linked_list_pop_front(MyListNode **head, int value) {
     if (!head || !(*head))
     {
         return;
     }
 
-    ListNode *temp = *head;
+    MyListNode *temp = *head;
     *head = temp->next;
     free(temp);
 }
 
-int is_linked_list_empty(ListNode *head) {
-    return !head;
+void my_linked_list_print(MyListNode* head) 
+{
+    if (!head) 
+    {
+        return;
+    }
+
+    while (head->next) {
+        printf("%d, ", head->value);
+        head = head->next;
+    }
+
+    printf("%d\n",head->value);
+}
+
+void my_linked_list_empty(MyListNode **head) {
+    if (!head) {
+        return;
+    }
+    
+    while (*head) {
+        MyListNode *temp = *head;
+        *head = (*head)->next;
+        free(temp);
+    }
 }
 
 #endif

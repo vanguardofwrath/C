@@ -1,216 +1,136 @@
-#ifndef MY_STRING
-#define MY_STRING
+#ifndef MY_STRING_H
+#define MY_STRING_H
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
-#include <math.h>
 #include <regex.h>
 
 typedef struct
 {
     char *data;
-    int length;
-    int capacity;
-} String;
+    size_t length;
+    size_t capacity;
+} MyString;
 
-String *create_string(const char *source)
-{
-    String *string = (String *)malloc(sizeof(String));
+typedef struct {
+    MyString **strings;
+    size_t capacity;
+    size_t length;
+} MyStringList;
+
+MyString *create_my_string(const char *source);
+void my_string_replace(MyString *string, const char *to_replace, const char *replacement);
+void my_string_insert(MyString *string, const char *to_insert, size_t index);
+void my_string_free(MyString *string);
+
+MyStringList *create_my_string_list(size_t capacity);
+void my_string_list_push(MyStringList *string_list, MyString *string);
+MyString *my_string_list_pop(MyStringList *string_list);
+void my_string_list_print(MyStringList *string_list);
+void my_string_list_free(MyStringList *string_list);
+
+bool my_string_regex_contains(MyString *string, const char *pattern);
+MyString *my_string_regex_match(MyString *string, const char *pattern);
+
+// --------------------------------------------------------------------------------------
+
+#define MYSTRING_EXTRA_CAPACITY 12
+
+static void my_string_ensure_capacity(MyString *string, size_t min_capacity) {
+    if (min_capacity >= string->capacity) {
+        size_t new_capacity = string->capacity * 2;
+        while (new_capacity < min_capacity + 1) {
+            new_capacity *= 2;
+        }
+
+        char *temp = (char *)realloc(string->data, new_capacity * sizeof(char));
+        if (!temp) {
+            return;
+        }
+
+        string->capacity = new_capacity;
+        string->data = temp;
+    }
+}
+
+static void my_string_list_ensure_capacity(MyStringList *string_list) {
+    if (string_list->length == string_list->capacity) {
+        size_t new_capacity = string_list->capacity * 2;
+
+        MyString **temp = (MyString **)realloc(string_list->strings, new_capacity * sizeof(MyString *));
+        if (!temp) {
+            return;
+        }
+
+        string_list->capacity = new_capacity;
+        string_list->strings = temp;
+    }
+}
+
+MyString *create_my_string(const char *source) {
+    MyString *string = (MyString *)malloc(sizeof(MyString));
     if (!string)
     {
         return NULL;
     }
 
-    if (!source)
-    {
-        string->length = 0;
-        string->capacity = 2;
-
-        char *temp = (char *)malloc(string->capacity * sizeof(char));
-        if (!temp)
-        {
-            free(string);
-            return NULL;
-        }
-
-        string->data = temp;
-        string->data[0] = '\0';
-        return string;
-    }
-
-    string->length = strlen(source);
-    string->capacity = string->length + 1;
-
-    char *copy = malloc(string->capacity * sizeof(char));
-    if (!copy)
-    {
+    string->data = strdup(source);
+    if (!string->data) {
         free(string);
         return NULL;
     }
 
-    strcpy(copy, source);
+    string->length = strlen(source);
+    string->capacity = string->length + MYSTRING_EXTRA_CAPACITY;
 
-    string->data = copy;
     return string;
 }
 
-void append_string(String *string, String *other)
-{
-    if (!string || !other)
-    {
-        return;
+void my_string_replace(MyString *string, const char *to_replace, const char *replacement) {
+    size_t to_replace_length = strlen(to_replace);
+    size_t replacement_length = strlen(replacement);
+
+    char *occurence = strstr(string->data, to_replace);
+    while(occurence) {
+            size_t start_index = occurence - string->data;
+            size_t end_index = start_index + to_replace_length;
+
+            memmove(string->data + start_index, string->data + end_index, string->length - end_index + 1);
+
+            my_string_insert(string, replacement, start_index);
+
+            occurence = strstr(string->data + start_index + replacement_length, to_replace);
     }
-
-    int new_length = string->length + other->length;
-
-    if (new_length >= string->capacity)
-    {
-        int new_capacity = string->capacity * 2;
-
-        while (new_capacity < new_length + 1)
-        {
-            new_capacity *= 2;
-        }
-
-        char *temp = (char *)realloc(string->data, new_capacity * sizeof(char));
-        if (!temp)
-        {
-            return;
-        }
-
-        string->capacity = new_capacity;
-        string->data = temp;
-    }
-
-    memcpy(string->data + string->length, other->data, other->length);
-
-    string->length = new_length;
-    string->data[string->length] = '\0';
 }
 
-void append_c_string(String *string, const char *other)
-{
-    if (!string || !other)
-    {
-        return;
-    }
-
-    int other_length = strlen(other);
-
-    int new_length = string->length + other_length;
-
-    if (new_length >= string->capacity)
-    {
-        int new_capacity = string->capacity * 2;
-
-        while (new_capacity < new_length + 1)
-        {
-            new_capacity *= 2;
-        }
-
-        char *temp = (char *)realloc(string->data, new_capacity * sizeof(char));
-        if (!temp)
-        {
-            return;
-        }
-
-        string->capacity = new_capacity;
-        string->data = temp;
-    }
-
-    memcpy(string->data + string->length, other, other_length);
-
-    string->length = new_length;
-    string->data[string->length] = '\0';
-}
-
-void remove_substring(String *string, String *substring) {
-    if (!string || !substring) {
-        return;
-    }
+void my_string_insert(MyString *string, const char *to_insert, size_t index) {
+    size_t to_insert_length = strlen(to_insert);
     
-    if (substring->length == 0 || substring->length > string->length) {
-        return;
-    }
+    size_t new_length = string->length + to_insert_length;
+    my_string_ensure_capacity(string, new_length);
 
-    char* first_occurence = strstr(string->data, substring->data);
-    if (!first_occurence)
-    {
-        return;
-    }
-
-    size_t start_index = first_occurence - string->data;
-    size_t end_index = start_index + substring->length;
-
-    memmove(&string->data[start_index], &string->data[end_index], string->length - end_index + 1);
-
-    string->length -= substring->length;
-}
-
-void append_char(String *string, char c)
-{
-    if (!string)
-    {
-        return;
-    }
-
-    int new_length = string->length + 1;
-
-    if (new_length + 1 >= string->capacity)
-    {
-        int new_capacity = string->capacity * 2;
-
-        char *temp = (char *)realloc(string->data, new_capacity * sizeof(char));
-        if (!temp)
-        {
-            return;
-        }
-
-        string->capacity = new_capacity;
-        string->data = temp;
-    }
-
-    string->data[string->length] = c;
+    memmove(string->data + index + to_insert_length, string->data + index, string->length - index + 1);
+    memcpy(string->data + index, to_insert, to_insert_length);
 
     string->length = new_length;
-    string->data[string->length] = '\0';
 }
 
-void print_string(String *string)
-{
-    if (!string)
-    {
-        return;
-    }
-
-    printf("%s\n", string->data);
-}
-
-void free_string(String *string)
-{
-    if (!string)
-    {
-        return;
-    }
-
+void my_string_free(MyString *string) {
     free(string->data);
     free(string);
 }
 
-typedef struct {
-    String **strings;
-    int capacity;
-    int length;
-} StringList;
+// --------------------------------------------------------------------------------------
 
-StringList *create_string_list(int capacity) {
-    StringList *new_list = (StringList *)malloc(sizeof(StringList));
+MyStringList *create_my_string_list(size_t capacity) {
+    MyStringList *new_list = (MyStringList *)malloc(sizeof(MyStringList));
     if (!new_list) {
         return NULL;
     }
 
-    new_list->strings = (String **)malloc(capacity * sizeof(String *));
+    new_list->strings = (MyString **)malloc(capacity * sizeof(MyString *));
     if (!new_list->strings) {
         free(new_list);
         return NULL;
@@ -221,50 +141,84 @@ StringList *create_string_list(int capacity) {
     return new_list;
 }
 
-void append_string_to_list(StringList *string_list, String *string) {
-    if (!string_list || !string) {
-        return;
-    }
-
-    if (string_list->length == string_list->capacity) {
-        int new_capacity = string_list->capacity * 2;
-
-        String **temp = (String **)realloc(string_list->strings, new_capacity * sizeof(String *));
-        if (!temp) {
-            return;
-        }
-
-        string_list->strings = temp;
-        string_list->capacity = new_capacity;
-    }
-
+void my_string_list_push(MyStringList *string_list, MyString *string) {
+    my_string_list_ensure_capacity(string_list);
     string_list->strings[string_list->length++] = string;
 }
 
-void append_c_string_to_list(StringList *string_list, const char* c_string) {
-    if (!string_list || !c_string) {
-        return;
-    }
-
-    String *string = create_string(c_string);
-    if (!string) {
-        return;
-    }
-
-    append_string_to_list(string_list, string);
+MyString *my_string_list_pop(MyStringList *string_list) {
+    MyString *string = string_list->strings[--string_list->length];
+    string_list->strings[string_list->length] = NULL;
+    return string;
 }
 
-void free_string_list(StringList *string_list) {
-    if (!string_list) {
+void my_string_list_print(MyStringList *string_list) {
+    if (string_list->length == 0) {
+        printf("[]\n");
         return;
     }
 
-    for (int i = 0; i < string_list->length; i++) {
-        free_string(string_list->strings[i]);
+    printf("[");
+    for (int i = 0; i < string_list->length - 1; i++) {
+        printf("%s, ", string_list->strings[i]->data);
+    }
+    printf("%s]\n", string_list->strings[string_list->length - 1]->data);
+}
+
+void my_string_list_free(MyStringList *string_list) {
+    for (size_t i = 0; i < string_list->length; i++) {
+        my_string_free(string_list->strings[i]);
     }
 
     free(string_list->strings);
     free(string_list);
+}
+
+// --------------------------------------------------------------------------------------
+
+bool my_string_regex_contains(MyString *string, const char *pattern) {
+    regex_t regex;
+    if (regcomp(&regex, pattern, REG_EXTENDED))
+    {
+        return false;
+    }
+
+    int result = regexec(&regex, string->data, 0, NULL, 0);
+    regfree(&regex);
+
+    return result != REG_NOMATCH;
+}
+
+MyString *my_string_regex_match(MyString *string, const char *pattern) {
+    regex_t regex;
+    if (regcomp(&regex, pattern, REG_EXTENDED))
+    {
+        return NULL;
+    }
+
+    regmatch_t match;
+    if (regexec(&regex, string->data, 1, &match, 0) == REG_NOMATCH) {
+        regfree(&regex);
+        return NULL;
+    }
+
+    regoff_t start = match.rm_so;
+    regoff_t end = match.rm_eo;
+
+    size_t match_length = (size_t)end - start;
+
+    char *matched_string = malloc((match_length + 1) * sizeof(char));
+    if (!matched_string) {
+        regfree(&regex);
+        return NULL;
+    }
+
+    memcpy(matched_string, string->data + start, match_length);
+    matched_string[match_length] = '\0';
+
+    MyString *to_return = create_my_string(matched_string);
+    regfree(&regex);
+    return to_return;
 }
 
 #endif

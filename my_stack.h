@@ -1,6 +1,7 @@
-#ifndef MY_STACK
-#define MY_STACK
+#ifndef MY_STACK_H
+#define MY_STACK_H
 
+#include <stdio.h>
 #include <stdlib.h>
 
 typedef struct
@@ -8,165 +9,209 @@ typedef struct
     double *items;
     int head;
     int capacity;
-} DoubleStack;
-
-DoubleStack *create_double_stack(int capacity)
-{
-    DoubleStack *s = (DoubleStack *)malloc(sizeof(DoubleStack));
-    if (s == NULL)
-    {
-        return NULL;
-    }
-
-    s->items = (double *)malloc(capacity * sizeof(double));
-    if (s->items == NULL)
-    {
-        free(s);
-        return NULL;
-    }
-
-    s->capacity = capacity;
-    s->head = -1;
-    return s;
-}
-
-int double_stack_count(DoubleStack *s)
-{
-    return s->head + 1;
-}
-
-int double_stack_is_empty(DoubleStack *s)
-{
-    return s->head == -1;
-}
-
-int double_stack_is_full(DoubleStack *s)
-{
-    return s->head == s->capacity - 1;
-}
-
-void double_stack_push(DoubleStack *s, double value)
-{
-    if (s == NULL || double_stack_is_full(s))
-    {
-        return;
-    }
-
-    s->items[++s->head] = value;
-}
-
-double double_stack_pop(DoubleStack *s)
-{
-    if (double_stack_is_empty(s))
-    {
-        return 0;
-    }
-
-    return s->items[s->head--];
-}
-
-double double_stack_peek(DoubleStack *s)
-{
-    if (double_stack_is_empty(s))
-    {
-        return 0;
-    }
-
-    return s->items[s->head];
-}
-
-void free_double_stack(DoubleStack *s)
-{
-    if (s == NULL)
-    {
-        return;
-    }
-
-    free(s->items);
-    free(s);
-}
+} MyDoubleStack;
 
 typedef struct
 {
     char *items;
     int head;
     int capacity;
-} CharStack;
+} MyCharStack;
 
-CharStack *create_char_stack(int capacity)
+MyDoubleStack *create_my_double_stack(int capacity);
+int my_double_stack_count(MyDoubleStack *stack);
+int my_double_stack_is_empty(MyDoubleStack *stack);
+int my_double_stack_is_full(MyDoubleStack *stack);
+void my_double_stack_push(MyDoubleStack *stack, double value);
+double my_double_stack_pop(MyDoubleStack *stack);
+double my_double_stack_peek(MyDoubleStack *stack);
+void my_double_stack_free(MyDoubleStack *stack);
+
+MyCharStack *create_my_char_stack(int capacity);
+int my_char_stack_count(MyCharStack *stack);
+int my_char_stack_is_empty(MyCharStack *stack);
+int my_char_stack_is_full(MyCharStack *stack);
+void my_char_stack_push(MyCharStack *stack, char value);
+int my_char_stack_pop(MyCharStack *stack);
+int my_char_stack_peek(MyCharStack *stack);
+void my_char_stack_free(MyCharStack *stack);
+
+// --------------------------------------------------------------------------------------
+
+MyDoubleStack *create_my_double_stack(int capacity)
 {
-    CharStack *s = (CharStack *)malloc(sizeof(CharStack));
-    if (s == NULL)
+    MyDoubleStack *stack = (MyDoubleStack *)malloc(sizeof(MyDoubleStack));
+    if (stack == NULL)
     {
         return NULL;
     }
 
-    s->items = (char *)malloc(capacity * sizeof(char));
-    if (s->items == NULL)
+    stack->items = (double *)malloc(capacity * sizeof(double));
+    if (stack->items == NULL)
     {
-        free(s);
+        free(stack);
         return NULL;
     }
 
-    s->capacity = capacity;
-    s->head = -1;
-    return s;
+    stack->capacity = capacity;
+    stack->head = -1;
+    return stack;
 }
 
-int char_stack_count(CharStack *s)
+int my_double_stack_count(MyDoubleStack *stack)
 {
-    return s->head + 1;
+    return stack->head + 1;
 }
 
-int char_stack_is_empty(CharStack *s)
+int my_double_stack_is_empty(MyDoubleStack *stack)
 {
-    return s->head == -1;
+    return stack->head == -1;
 }
 
-int char_stack_is_full(CharStack *s)
+int my_double_stack_is_full(MyDoubleStack *stack)
 {
-    return s->head == s->capacity - 1;
+    return stack->head == stack->capacity - 1;
 }
 
-void char_stack_push(CharStack *s, char value)
+void my_double_stack_push(MyDoubleStack *stack, double value)
 {
-    if (s == NULL || char_stack_is_full(s))
+    if (stack == NULL)
     {
         return;
     }
 
-    s->items[++s->head] = value;
+    if (my_double_stack_is_full(stack)) {
+        int new_capacity = stack->capacity * 2;
+
+        double *temp = (double *)realloc(stack->items, new_capacity * sizeof(double));
+        if (!temp) {
+            return;
+        }
+
+        stack->items = temp;
+        stack->capacity = new_capacity;
+    }
+
+    stack->items[++stack->head] = value;
 }
 
-int char_stack_pop(CharStack *s)
+double my_double_stack_pop(MyDoubleStack *stack)
 {
-    if (char_stack_is_empty(s))
+    if (my_double_stack_is_empty(stack))
     {
         return 0;
     }
 
-    return s->items[s->head--];
+    return stack->items[stack->head--];
 }
 
-int char_stack_peek(CharStack *s)
+double my_double_stack_peek(MyDoubleStack *stack)
 {
-    if (char_stack_is_empty(s))
+    if (my_double_stack_is_empty(stack))
     {
         return 0;
     }
 
-    return s->items[s->head];
+    return stack->items[stack->head];
 }
 
-void free_char_stack(CharStack *s)
+void my_double_stack_free(MyDoubleStack *stack)
 {
-    if (s == NULL)
+    if (stack == NULL)
     {
         return;
     }
 
-    free(s->items);
-    free(s);
+    free(stack->items);
+    free(stack);
+}
+
+MyCharStack *create_my_char_stack(int capacity)
+{
+    MyCharStack *stack = (MyCharStack *)malloc(sizeof(MyCharStack));
+    if (stack == NULL)
+    {
+        return NULL;
+    }
+
+    stack->items = (char *)malloc(capacity * sizeof(char));
+    if (stack->items == NULL)
+    {
+        free(stack);
+        return NULL;
+    }
+
+    stack->capacity = capacity;
+    stack->head = -1;
+    return stack;
+}
+
+int my_char_stack_count(MyCharStack *stack)
+{
+    return stack->head + 1;
+}
+
+int my_char_stack_is_empty(MyCharStack *stack)
+{
+    return stack->head == -1;
+}
+
+int my_char_stack_is_full(MyCharStack *stack)
+{
+    return stack->head == stack->capacity - 1;
+}
+
+void my_char_stack_push(MyCharStack *stack, char value)
+{
+    if (stack == NULL)
+    {
+        return;
+    }
+
+    if (my_char_stack_is_full(stack)) {
+        int new_capacity = stack->capacity * 2;
+
+        char *temp = (char *)realloc(stack->items, new_capacity * sizeof(char));
+        if (!temp) {
+            return;
+        }
+
+        stack->items = temp;
+        stack->capacity = new_capacity;
+    }
+
+    stack->items[++stack->head] = value;
+}
+
+int my_char_stack_pop(MyCharStack *stack)
+{
+    if (my_char_stack_is_empty(stack))
+    {
+        return 0;
+    }
+
+    return stack->items[stack->head--];
+}
+
+int my_char_stack_peek(MyCharStack *stack)
+{
+    if (my_char_stack_is_empty(stack))
+    {
+        return 0;
+    }
+
+    return stack->items[stack->head];
+}
+
+void my_char_stack_free(MyCharStack *stack)
+{
+    if (stack == NULL)
+    {
+        return;
+    }
+
+    free(stack->items);
+    free(stack);
 }
 
 #endif
