@@ -24,11 +24,13 @@ MyString *create_my_string(const char *source);
 void my_string_replace(MyString *string, const char *to_replace, const char *replacement);
 void my_string_insert(MyString *string, const char *to_insert, size_t index);
 bool my_string_is_equal(MyString *string, const char *to_compare);
+bool my_string_is_number(MyString *string);
 void my_string_free(MyString *string);
 
 MyStringList *create_my_string_list(size_t capacity);
 void my_string_list_push(MyStringList *string_list, MyString *string);
 MyString *my_string_list_pop(MyStringList *string_list);
+void my_string_list_reverse(MyStringList *string_list);
 void my_string_list_print(MyStringList *string_list);
 void my_string_list_free(MyStringList *string_list);
 
@@ -40,7 +42,7 @@ MyStringList *my_string_regex_match_all(MyString *string, const char *pattern) ;
 
 #define MYSTRING_EXTRA_CAPACITY 12
 
-static void my_string_ensure_capacity(MyString *string, size_t min_capacity) {
+static bool my_string_ensure_capacity(MyString *string, size_t min_capacity) {
     if (min_capacity >= string->capacity) {
         size_t new_capacity = string->capacity * 2;
         while (new_capacity < min_capacity + 1) {
@@ -49,26 +51,30 @@ static void my_string_ensure_capacity(MyString *string, size_t min_capacity) {
 
         char *temp = (char *)realloc(string->data, new_capacity * sizeof(char));
         if (!temp) {
-            return;
+            return false;
         }
 
         string->capacity = new_capacity;
         string->data = temp;
     }
+    
+    return true;
 }
 
-static void my_string_list_ensure_capacity(MyStringList *string_list) {
+static bool my_string_list_ensure_capacity(MyStringList *string_list) {
     if (string_list->length == string_list->capacity) {
         size_t new_capacity = string_list->capacity * 2;
 
         MyString **temp = (MyString **)realloc(string_list->strings, new_capacity * sizeof(MyString *));
         if (!temp) {
-            return;
+            return false;
         }
 
         string_list->capacity = new_capacity;
         string_list->strings = temp;
     }
+
+    return true;
 }
 
 MyString *create_my_string(const char *source) {
@@ -109,9 +115,12 @@ void my_string_replace(MyString *string, const char *to_replace, const char *rep
 
 void my_string_insert(MyString *string, const char *to_insert, size_t index) {
     size_t to_insert_length = strlen(to_insert);
-    
     size_t new_length = string->length + to_insert_length;
-    my_string_ensure_capacity(string, new_length);
+
+    bool success = my_string_ensure_capacity(string, new_length);
+    if (!success) {
+        return;
+    }
 
     memmove(string->data + index + to_insert_length, string->data + index, string->length - index + 1);
     memcpy(string->data + index, to_insert, to_insert_length);
@@ -128,6 +137,12 @@ bool my_string_is_equal(MyString *string, const char *to_compare) {
         i++;
     }
     return 1;
+}
+
+bool my_string_is_number(MyString *string) {
+    char *endptr;
+    strtod(string->data, &endptr);
+    return (endptr != string->data && *endptr == '\0');
 }
 
 void my_string_free(MyString *string) {
@@ -155,14 +170,56 @@ MyStringList *create_my_string_list(size_t capacity) {
 }
 
 void my_string_list_push(MyStringList *string_list, MyString *string) {
-    my_string_list_ensure_capacity(string_list);
+    bool success = my_string_list_ensure_capacity(string_list);
+    if (!success) {
+        return;
+    }
+
     string_list->strings[string_list->length++] = string;
 }
 
+void my_string_list_push_copy(MyStringList *string_list, MyString *string) {
+    bool success = my_string_list_ensure_capacity(string_list);
+    if (!success) {
+        return;
+    }
+    
+    string_list->strings[string_list->length++] = create_my_string(string->data);
+}
+
+MyString *my_string_list_peek(MyStringList *string_list) {
+    if (string_list->length == 0) { 
+        return NULL; 
+    }
+
+    return string_list->strings[string_list->length - 1];
+}
+
 MyString *my_string_list_pop(MyStringList *string_list) {
+    if (string_list->length == 0) { 
+        return NULL; 
+    }
+
     MyString *string = string_list->strings[--string_list->length];
     string_list->strings[string_list->length] = NULL;
     return string;
+}
+
+void my_string_list_reverse(MyStringList *string_list) {
+    if (string_list->length <= 1) {
+        return;
+    }
+    
+    int left = 0, right = string_list->length - 1;
+
+    while (left < right) {
+        MyString *temp = string_list->strings[left];
+        string_list->strings[left] = string_list->strings[right];
+        string_list->strings[right] = temp;
+
+        left++;
+        right--;
+    }
 }
 
 void my_string_list_print(MyStringList *string_list) {
@@ -230,6 +287,7 @@ MyString *my_string_regex_match(MyString *string, const char *pattern) {
     matched_string[match_length] = '\0';
 
     MyString *to_return = create_my_string(matched_string);
+    free(matched_string);
     regfree(&regex);
     return to_return;
 }
