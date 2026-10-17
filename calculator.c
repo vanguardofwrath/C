@@ -6,15 +6,11 @@
 #include "my_stack.h"
 #include "my_string.h"
 
-#define TOKENIZATION_REGEX_PATTERN "[0-9]+(\\.[0-9]+)?|[()^*/+-]|sqrt|sin|cos"
+#define TOKENIZATION_REGEX_PATTERN "[0-9]+(\\.[0-9]+)?|[()^*/+-]"
 
 bool is_operator(MyString *string)
 {
     return my_string_is_equal(string, "^") || my_string_is_equal(string, "*") || my_string_is_equal(string, "/") || my_string_is_equal(string, "+") || my_string_is_equal(string, "-");
-}
-
-bool is_function(MyString *string) {
-    return my_string_is_equal(string, "sqrt") || my_string_is_equal(string, "sin") || my_string_is_equal(string, "cos");
 }
 
 bool is_left_parentheses(MyString *string)
@@ -87,7 +83,7 @@ double calculate_expression(const char *source) {
         }
         else if(is_operator(token)) {
             MyString *top_operator = my_string_list_peek(operator_stack);
-            while (top_operator && !my_string_is_equal(top_operator, "(") && get_precedence(top_operator) >= get_precedence(token) && !is_right_associative(token)) {
+            while (top_operator && !!is_left_parentheses(top_operator) && get_precedence(top_operator) >= get_precedence(token) && !is_right_associative(token)) {
                 my_string_list_push(output_list, my_string_list_pop(operator_stack));
                 top_operator = my_string_list_peek(operator_stack);
             }
@@ -98,7 +94,7 @@ double calculate_expression(const char *source) {
             my_string_list_push(operator_stack, token);
         }
         else if (is_right_parentheses(token)) {
-            while (!my_string_is_equal(my_string_list_peek(operator_stack), "(")) {
+            while (!is_left_parentheses(my_string_list_peek(operator_stack))) {
                 my_string_list_push(output_list, my_string_list_pop(operator_stack));
             }
 
@@ -111,6 +107,8 @@ double calculate_expression(const char *source) {
         my_string_list_push(output_list, my_string_list_pop(operator_stack));
     }
 
+    my_string_list_print(output_list);
+
     for(int i = 0; i < output_list->length; i++) {
         MyString *string = output_list->strings[i];
 
@@ -122,6 +120,7 @@ double calculate_expression(const char *source) {
             double left_operand = my_double_stack_pop(evalution_stack);
 
             double local_result;
+
             if (my_string_is_equal(string, "^")) {
                 local_result = pow(left_operand, right_operand);
             }

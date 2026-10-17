@@ -178,15 +178,6 @@ void my_string_list_push(MyStringList *string_list, MyString *string) {
     string_list->strings[string_list->length++] = string;
 }
 
-void my_string_list_push_copy(MyStringList *string_list, MyString *string) {
-    bool success = my_string_list_ensure_capacity(string_list);
-    if (!success) {
-        return;
-    }
-    
-    string_list->strings[string_list->length++] = create_my_string(string->data);
-}
-
 MyString *my_string_list_peek(MyStringList *string_list) {
     if (string_list->length == 0) { 
         return NULL; 
@@ -209,7 +200,7 @@ void my_string_list_reverse(MyStringList *string_list) {
     if (string_list->length <= 1) {
         return;
     }
-    
+
     int left = 0, right = string_list->length - 1;
 
     while (left < right) {
