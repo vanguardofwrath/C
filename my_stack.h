@@ -76,16 +76,13 @@ bool my_double_stack_is_full(MyDoubleStack *stack)
 
 void my_double_stack_push(MyDoubleStack *stack, double value)
 {
-    if (stack == NULL)
+    if (my_double_stack_is_full(stack))
     {
-        return;
-    }
-
-    if (my_double_stack_is_full(stack)) {
         int new_capacity = stack->capacity * 2;
 
         double *temp = (double *)realloc(stack->items, new_capacity * sizeof(double));
-        if (!temp) {
+        if (!temp)
+        {
             return;
         }
 
@@ -118,11 +115,6 @@ double my_double_stack_peek(MyDoubleStack *stack)
 
 void my_double_stack_free(MyDoubleStack *stack)
 {
-    if (stack == NULL)
-    {
-        return;
-    }
-
     free(stack->items);
     free(stack);
 }
@@ -164,16 +156,13 @@ bool my_char_stack_is_full(MyCharStack *stack)
 
 void my_char_stack_push(MyCharStack *stack, char value)
 {
-    if (stack == NULL)
+    if (my_char_stack_is_full(stack))
     {
-        return;
-    }
-
-    if (my_char_stack_is_full(stack)) {
         int new_capacity = stack->capacity * 2;
 
         char *temp = (char *)realloc(stack->items, new_capacity * sizeof(char));
-        if (!temp) {
+        if (!temp)
+        {
             return;
         }
 
@@ -206,11 +195,6 @@ int my_char_stack_peek(MyCharStack *stack)
 
 void my_char_stack_free(MyCharStack *stack)
 {
-    if (stack == NULL)
-    {
-        return;
-    }
-
     free(stack->items);
     free(stack);
 }

@@ -32,7 +32,6 @@ MyStringList *create_my_string_list(size_t capacity);
 void my_string_list_push(MyStringList *string_list, MyString *string);
 MyString *my_string_list_pop(MyStringList *string_list);
 void my_string_list_reverse(MyStringList *string_list);
-void my_string_list_print(MyStringList *string_list);
 void my_string_list_free(MyStringList *string_list);
 
 bool my_string_regex_contains(MyString *string, const char *pattern);
@@ -244,22 +243,6 @@ void my_string_list_reverse(MyStringList *string_list)
         left++;
         right--;
     }
-}
-
-void my_string_list_print(MyStringList *string_list)
-{
-    if (string_list->length == 0)
-    {
-        printf("[]\n");
-        return;
-    }
-
-    printf("[");
-    for (int i = 0; i < string_list->length - 1; i++)
-    {
-        printf("%s, ", string_list->strings[i]->data);
-    }
-    printf("%s]\n", string_list->strings[string_list->length - 1]->data);
 }
 
 void my_string_list_free(MyStringList *string_list)
