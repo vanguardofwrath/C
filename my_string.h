@@ -38,53 +38,7 @@ bool my_string_regex_contains(MyString *string, const char *pattern);
 MyString *my_string_regex_match(MyString *string, const char *pattern);
 MyStringList *my_string_regex_match_all(MyString *string, const char *pattern);
 
-// --------------------------------------------------------------------------------------
-
 #define MYSTRING_EXTRA_CAPACITY 12
-
-static bool my_string_ensure_capacity(MyString *string, size_t min_capacity)
-{
-    if (min_capacity >= string->capacity)
-    {
-        size_t new_capacity = string->capacity * 2;
-        while (new_capacity < min_capacity + 1)
-        {
-            new_capacity *= 2;
-        }
-
-        char *temp = (char *)realloc(string->data, new_capacity * sizeof(char));
-        if (!temp)
-        {
-            return false;
-        }
-
-        string->capacity = new_capacity;
-        string->data = temp;
-    }
-
-    return true;
-}
-
-static bool my_string_list_ensure_capacity(MyStringList *string_list)
-{
-    if (string_list->length == string_list->capacity)
-    {
-        size_t new_capacity = string_list->capacity * 2;
-
-        MyString **temp = (MyString **)realloc(string_list->strings, new_capacity * sizeof(MyString *));
-        if (!temp)
-        {
-            return false;
-        }
-
-        string_list->capacity = new_capacity;
-        string_list->strings = temp;
-    }
-
-    return true;
-}
-
-// --------------------------------------------------------------------------------------
 
 MyString *create_my_string(const char *source)
 {
@@ -131,10 +85,22 @@ void my_string_insert(MyString *string, const char *to_insert, size_t index)
     size_t to_insert_length = strlen(to_insert);
     size_t new_length = string->length + to_insert_length;
 
-    bool success = my_string_ensure_capacity(string, new_length);
-    if (!success)
+    if (new_length >= string->capacity)
     {
-        return;
+        size_t new_capacity = string->capacity * 2;
+        while (new_capacity < new_length + 1)
+        {
+            new_capacity *= 2;
+        }
+
+        char *temp = (char *)realloc(string->data, new_capacity * sizeof(char));
+        if (!temp)
+        {
+            return;
+        }
+
+        string->capacity = new_capacity;
+        string->data = temp;
     }
 
     memmove(string->data + index + to_insert_length, string->data + index, string->length - index + 1);
@@ -194,10 +160,18 @@ MyStringList *create_my_string_list(size_t capacity)
 
 void my_string_list_push(MyStringList *string_list, MyString *string)
 {
-    bool success = my_string_list_ensure_capacity(string_list);
-    if (!success)
+   if (string_list->length == string_list->capacity)
     {
-        return;
+        size_t new_capacity = string_list->capacity * 2;
+
+        MyString **temp = (MyString **)realloc(string_list->strings, new_capacity * sizeof(MyString *));
+        if (!temp)
+        {
+            return;
+        }
+
+        string_list->capacity = new_capacity;
+        string_list->strings = temp;
     }
 
     string_list->strings[string_list->length++] = string;

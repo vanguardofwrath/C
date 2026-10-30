@@ -16,10 +16,7 @@ void *my_linked_list_pop(MyListNode **head);
 void my_linked_list_push_front(MyListNode **head, void *value);
 void *my_linked_list_pop_front(MyListNode **head);
 void *my_linked_list_peek(MyListNode *head);
-void *my_linked_list_remove_by_value(MyListNode **head, void *value);
-void my_linked_list_free(MyListNode **head);
-
-// --------------------------------------------------------------------------------------
+void my_linked_list_free(MyListNode **head, void (*destroy_function)(void *value));
 
 void my_linked_list_push(MyListNode **head, void *value)
 {
@@ -49,10 +46,11 @@ void my_linked_list_push(MyListNode **head, void *value)
 
 void *my_linked_list_pop(MyListNode **head)
 {
-    if (!(*head)) {
+    if (!(*head))
+    {
         return NULL;
     }
-    
+
     if (!(*head)->next)
     {
         void *value = (*head)->value;
@@ -75,7 +73,8 @@ void *my_linked_list_pop(MyListNode **head)
 
 void *my_linked_list_peek(MyListNode *head)
 {
-    if (!head) {
+    if (!head)
+    {
         return NULL;
     }
 
@@ -102,48 +101,24 @@ void my_linked_list_push_front(MyListNode **head, void *value)
 
 void *my_linked_list_pop_front(MyListNode **head)
 {
-    void *to_return = (*head)->value;
-    MyListNode *temp = *head;
-    *head = temp->next;
-    free(temp);
-    return to_return;
-}
-
-void *my_linked_list_remove_by_value(MyListNode **head, void *value) {
     if (!(*head)) {
         return NULL;
     }
 
-    if ((*head)->value == value)
-    {
-        void *value = (*head)->value;
-        free(*head);
-        *head = NULL;
-        return value;
-    }
-
-    MyListNode *current = *head;
-    while (current->next) {
-        if (current->next->value == value) {
-            MyListNode *to_remove = current->next;
-            void *to_return = to_remove->value;
-            current->next = to_remove->next;
-            free(to_remove);
-            return to_return;
-        }
-
-        current = current->next;
-    }
-
-    return NULL;
+    MyListNode *to_remove = *head;
+    void *to_return = to_remove->value;
+    *head = to_remove->next;
+    free(to_remove);
+    return to_return;
 }
 
-void my_linked_list_free(MyListNode **head)
+void my_linked_list_free(MyListNode **head, void (*destroy_function)(void *value))
 {
     while (*head)
     {
         MyListNode *temp = *head;
         *head = (*head)->next;
+        destroy_function(temp->value);
         free(temp);
     }
 }

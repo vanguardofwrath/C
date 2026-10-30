@@ -37,8 +37,6 @@ int my_char_stack_pop(MyCharStack *stack);
 int my_char_stack_peek(MyCharStack *stack);
 void my_char_stack_free(MyCharStack *stack);
 
-// --------------------------------------------------------------------------------------
-
 MyDoubleStack *create_my_double_stack(int capacity)
 {
     MyDoubleStack *stack = (MyDoubleStack *)malloc(sizeof(MyDoubleStack));

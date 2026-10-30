@@ -14,16 +14,20 @@ typedef struct
     size_t capacity;
 } MyHashMap;
 
-typedef struct {
+typedef struct
+{
     char *key;
     void *value;
 } HashMapItem;
 
 MyHashMap *create_my_hash_map();
 void my_hash_map_set(MyHashMap *hash_map, char *key, void *value);
-HashMapItem *my_hash_map_get(MyHashMap *hashmap, char *key);
+void *my_hash_map_get(MyHashMap *hashmap, char *key);
 void my_hash_map_remove(MyHashMap *hash_map, char *key);
 void my_hash_map_free(MyHashMap *hash_map);
+
+HashMapItem *create_hash_map_item(char *key, void *value);
+void hash_map_item_free(HashMapItem *item);
 
 // --------------------------------------------------------------------------------------
 
@@ -35,26 +39,78 @@ static size_t djb2_hash(char *string)
     while ((c = *string++))
     {
         hash = ((hash << 5) + hash) + c;
-    } 
+    }
 
     return hash;
 }
 
-static HashMapItem *search_item(MyListNode *bucket, size_t hash_code) {
-    while (bucket) {
+static bool compare_item(HashMapItem *item, size_t hash_code, char *key)
+{
+    return djb2_hash(item->key) == hash_code && strcmp(item->key, key) == 0;
+}
+
+static HashMapItem *search_item(MyListNode *bucket, size_t hash_code, char *key)
+{
+    while (bucket)
+    {
         HashMapItem *item = (HashMapItem *)(bucket->value);
-        if (djb2_hash(item->key) == hash_code) {
+        if (compare_item(item, hash_code, key))
+        {
             return item;
         }
+
         bucket = bucket->next;
     }
+
     return NULL;
 }
 
+static bool remove_item(MyListNode **bucket, size_t hash_code, char *key)
+{
+    while (*bucket)
+    {
+        HashMapItem *item = (HashMapItem *)(*bucket)->value;
+        if (compare_item(item, hash_code, key))
+        {
+            MyListNode *to_remove = *bucket;
+            *bucket = to_remove->next;
+            hash_map_item_free(item);
+            free(to_remove);
+            return true;
+        }
+        
+        bucket = &((*bucket)->next);
+    }
+    return false;
+}
 
 // --------------------------------------------------------------------------------------
 
-#define DEFAULT_CAPACITY 10
+HashMapItem *create_hash_map_item(char *key, void *value) {
+    HashMapItem *item = (HashMapItem *)malloc(sizeof(HashMapItem));
+    if (!item) {
+        return NULL;
+    }
+
+    item->key = strdup(key);
+    if (!item->key) {
+        free(item);
+        return NULL;
+    }
+
+    item->value = value;
+    return item;
+}
+
+void hash_map_item_free(HashMapItem *item) {
+    free(item->key);
+    free(item->value);
+    free(item);
+}
+
+// --------------------------------------------------------------------------------------
+
+#define DEFAULT_CAPACITY 16
 
 MyHashMap *create_my_hash_map()
 {
@@ -64,7 +120,7 @@ MyHashMap *create_my_hash_map()
         return NULL;
     }
 
-    hash_map->buckets = (MyListNode **)malloc(sizeof(MyListNode *) * DEFAULT_CAPACITY);
+    hash_map->buckets = (MyListNode **)calloc(DEFAULT_CAPACITY, sizeof(MyListNode *));
     if (!hash_map->buckets)
     {
         free(hash_map);
@@ -80,51 +136,50 @@ void my_hash_map_set(MyHashMap *hash_map, char *key, void *value)
 {
     size_t hash_code = djb2_hash(key);
     size_t index = hash_code % hash_map->capacity;
-    MyListNode *bucket = hash_map->buckets[index];
+    MyListNode **bucket = &hash_map->buckets[index];
 
-    HashMapItem *found_item = search_item(bucket, hash_code);
-    if (found_item) {
-        found_item->value = value;
+    HashMapItem *existing = search_item(*bucket, hash_code, key);
+    if (existing)
+    {
+        free(existing->value);
+
+        existing->value = value;
         return;
     }
 
-    HashMapItem *new_item = (HashMapItem *)malloc(sizeof(HashMapItem));
-    if (!new_item)
+    HashMapItem *item = create_hash_map_item(key, value);
+    if (!item)
     {
         return;
     }
 
-    new_item->key = key;
-    new_item->value = value;
-
-    my_linked_list_push(&bucket, new_item);
+    my_linked_list_push(bucket, item);
+    hash_map->length++;
 }
 
-HashMapItem *my_hash_map_get(MyHashMap *hash_map, char *key) {
+void *my_hash_map_get(MyHashMap *hash_map, char *key)
+{
     size_t hash_code = djb2_hash(key);
     size_t index = hash_code % hash_map->capacity;
     MyListNode *bucket = hash_map->buckets[index];
-    return search_item(bucket, hash_code);
+    HashMapItem *item = search_item(bucket, hash_code, key);
+    return item != NULL ? item->value : NULL;
 }
 
 void my_hash_map_remove(MyHashMap *hash_map, char *key)
 {
     size_t hash_code = djb2_hash(key);
     size_t index = hash_code % hash_map->capacity;
-    MyListNode *bucket = hash_map->buckets[index];
-    while (bucket) {
-        HashMapItem *item = bucket->value;
-        if (djb2_hash(item->key) == hash_code) {
-            
-        }
-        bucket = bucket->next;
+    MyListNode **bucket = &hash_map->buckets[index];
+    if (remove_item(bucket, hash_code, key)) {
+        hash_map->length--;
     }
 }
 
 void my_hash_map_free(MyHashMap *hash_map)
 {
-    for (int i = 0; i < DEFAULT_CAPACITY; i++) {
-        my_linked_list_free(hash_map->buckets[i]);
+    for (size_t i = 0; i < hash_map->capacity; i++) {
+        my_linked_list_free(&hash_map->buckets[i], (void *)hash_map_item_free);
     }
 
     free(hash_map->buckets);
