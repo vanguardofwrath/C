@@ -44,17 +44,12 @@ static size_t djb2_hash(char *string)
     return hash;
 }
 
-static bool compare_item(HashMapItem *item, size_t hash_code, char *key)
-{
-    return djb2_hash(item->key) == hash_code && strcmp(item->key, key) == 0;
-}
-
 static HashMapItem *search_item(MyListNode *bucket, size_t hash_code, char *key)
 {
     while (bucket)
     {
         HashMapItem *item = (HashMapItem *)(bucket->value);
-        if (compare_item(item, hash_code, key))
+        if (strcmp(item->key, key) == 0)
         {
             return item;
         }
@@ -70,7 +65,7 @@ static bool remove_item(MyListNode **bucket, size_t hash_code, char *key)
     while (*bucket)
     {
         HashMapItem *item = (HashMapItem *)(*bucket)->value;
-        if (compare_item(item, hash_code, key))
+        if (strcmp(item->key, key) == 0)
         {
             MyListNode *to_remove = *bucket;
             *bucket = to_remove->next;
