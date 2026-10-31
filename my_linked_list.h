@@ -13,9 +13,10 @@ typedef struct MyListNode
 
 void my_linked_list_push(MyListNode **head, void *value);
 void *my_linked_list_pop(MyListNode **head);
+void *my_linked_list_peek(MyListNode *head);
 void my_linked_list_push_front(MyListNode **head, void *value);
 void *my_linked_list_pop_front(MyListNode **head);
-void *my_linked_list_peek(MyListNode *head);
+void *my_linked_list_peek_front(MyListNode *head);
 void my_linked_list_free(MyListNode **head, void (*destroy_function)(void *value));
 
 void my_linked_list_push(MyListNode **head, void *value)
@@ -101,7 +102,8 @@ void my_linked_list_push_front(MyListNode **head, void *value)
 
 void *my_linked_list_pop_front(MyListNode **head)
 {
-    if (!(*head)) {
+    if (!(*head))
+    {
         return NULL;
     }
 
@@ -112,13 +114,24 @@ void *my_linked_list_pop_front(MyListNode **head)
     return to_return;
 }
 
+void *my_linked_list_peek_front(MyListNode *head) {
+    if (!head) {
+        return NULL;
+    }
+
+    return head->value;
+}
+
 void my_linked_list_free(MyListNode **head, void (*destroy_function)(void *value))
 {
     while (*head)
     {
         MyListNode *temp = *head;
         *head = (*head)->next;
-        destroy_function(temp->value);
+        if (destroy_function && temp->value)
+        {
+            destroy_function(temp->value);
+        }
         free(temp);
     }
 }

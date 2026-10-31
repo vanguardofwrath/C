@@ -29,9 +29,9 @@ bool is_right_parentheses(MyString *string)
 
 int get_precedence(MyString *operator)
 {
-    return my_string_is_equal(operator, "^") ? 3 : (my_string_is_equal(operator, "*") || my_string_is_equal(operator, "/")) ? 2
-                                               : (my_string_is_equal(operator, "+") || my_string_is_equal(operator, "-"))   ? 1
-                                                                                                                            : 0;
+    return my_string_is_equal(operator, "^") ? 3
+    : (my_string_is_equal(operator, "*") || my_string_is_equal(operator, "/")) ? 2
+    : (my_string_is_equal(operator, "+") || my_string_is_equal(operator, "-")) ? 1 : 0;
 }
 
 bool is_right_associative(MyString *operator)

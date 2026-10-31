@@ -57,7 +57,6 @@ MyString *create_my_string(const char *source)
 
     string->length = strlen(source);
     string->capacity = string->length + MYSTRING_EXTRA_CAPACITY;
-
     return string;
 }
 
