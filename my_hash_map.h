@@ -64,7 +64,7 @@ static void resize_hash_map(MyHashMap *hash_map) {
         MyListNode **bucket = &hash_map->buckets[i];
 
         while(my_linked_list_peek_front(*bucket)) {
-            HashMapItem *item = my_linked_list_pop_front(bucket);
+            HashMapItem *item = (HashMapItem *)my_linked_list_pop_front(bucket);
 
             size_t hash_code = djb2_hash(item->key);
             size_t index = get_index(hash_code, new_capacity);
