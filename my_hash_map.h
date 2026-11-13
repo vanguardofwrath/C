@@ -64,7 +64,7 @@ static void resize_hash_map(MyHashMap *hash_map) {
         MyListNode **bucket = &hash_map->buckets[i];
 
         while(my_linked_list_peek_front(*bucket)) {
-            HashMapItem *item = my_linked_list_pop_front(bucket);
+            HashMapItem *item = (HashMapItem *)my_linked_list_pop_front(bucket);
 
             size_t hash_code = djb2_hash(item->key);
             size_t index = get_index(hash_code, new_capacity);
@@ -79,7 +79,7 @@ static void resize_hash_map(MyHashMap *hash_map) {
     hash_map->buckets = new_buckets;
 }
 
-static HashMapItem *search_item(MyListNode *bucket, size_t hash_code, char *key)
+static HashMapItem *search_item(MyListNode *bucket, char *key)
 {
     while (bucket)
     {
@@ -95,7 +95,7 @@ static HashMapItem *search_item(MyListNode *bucket, size_t hash_code, char *key)
     return NULL;
 }
 
-static bool remove_item(MyListNode **bucket, size_t hash_code, char *key)
+static bool remove_item(MyListNode **bucket, char *key)
 {
     while (*bucket)
     {
@@ -173,7 +173,7 @@ void my_hash_map_set(MyHashMap *hash_map, char *key, void *value)
     size_t index = get_index(hash_code, hash_map->capacity);
     MyListNode **bucket = &hash_map->buckets[index];
 
-    HashMapItem *existing = search_item(*bucket, hash_code, key);
+    HashMapItem *existing = search_item(*bucket, key);
     if (existing)
     {
         existing->value = value;
@@ -199,7 +199,7 @@ void *my_hash_map_get(MyHashMap *hash_map, char *key)
     size_t hash_code = djb2_hash(key);
     size_t index = get_index(hash_code, hash_map->capacity);
     MyListNode *bucket = hash_map->buckets[index];
-    HashMapItem *item = search_item(bucket, hash_code, key);
+    HashMapItem *item = search_item(bucket, key);
     return item != NULL ? item->value : NULL;
 }
 
@@ -208,7 +208,7 @@ void my_hash_map_remove(MyHashMap *hash_map, char *key)
     size_t hash_code = djb2_hash(key);
     size_t index = get_index(hash_code, hash_map->capacity);
     MyListNode **bucket = &hash_map->buckets[index];
-    if (remove_item(bucket, hash_code, key))
+    if (remove_item(bucket, key))
     {
         hash_map->item_count--;
     }
