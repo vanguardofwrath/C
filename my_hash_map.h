@@ -1,228 +1,69 @@
+
 #ifndef MY_HASH_MAP_H
 #define MY_HASH_MAP_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdint.h>
 
 #include "my_linked_list.h"
 
 typedef struct
 {
     MyListNode **buckets;
-    size_t item_count;
-    size_t capacity;
+    uint64_t item_count;
+    uint64_t capacity;
 } MyHashMap;
 
-typedef struct
-{
-    char *key;
-    void *value;
-} HashMapItem;
+typedef enum {
+    KEY_TYPE_CHAR,
+    KEY_TYPE_STRING,
+} KeyType;
+
+typedef enum {
+    VALUE_TYPE_UINT64,
+    VALUE_TYPE_CHAR,
+    VALUE_TYPE_INT,
+    VALUE_TYPE_DOUBLE,
+    VALUE_TYPE_STRING,
+} ValueType;
+
+typedef struct {
+    KeyType type;
+    union {
+        char c;
+        char *s;
+    } data;
+} ItemKey;
+
+typedef struct {
+    ValueType type;
+    union {
+        uint64_t u64;
+        char c;
+        int i;
+        double d;
+        char *s;
+    } data;
+} ItemValue;
+
+#define KEY_CHAR(ch) ((ItemKey){.type = KEY_TYPE_CHAR, .data.c = (ch)})
+#define KEY_STRING(s) ((ItemKey){.type = KEY_TYPE_STRING, .data.s = (s)})
+
+#define VALUE_UINT64(n) ((ItemValue){.type = VALUE_TYPE_UINT64, .data.u64 = (n)})
+#define VALUE_CHAR(c) ((ItemValue){.type = VALUE_TYPE_CHAR, .data.c = (c)})
+#define VALUE_INT(n) ((ItemValue){.type = VALUE_TYPE_INT, .data.i = (n)})
+#define VALUE_DOUBLE(n) ((ItemValue){.type = VALUE_TYPE_DOUBLE, .data.d = (n)})
+#define VALUE_STRING(s) ((ItemValue){.type = VALUE_TYPE_STRING, .data.s = (s)})
 
 MyHashMap *create_my_hash_map();
-void my_hash_map_set(MyHashMap *hash_map, char *key, void *value);
-void *my_hash_map_get(MyHashMap *hashmap, char *key);
-void my_hash_map_remove(MyHashMap *hash_map, char *key);
+void my_hash_map_set(MyHashMap *hash_map, ItemKey key, ItemValue value);
+bool my_hash_map_get_uint64(MyHashMap *hash_map, ItemKey key, uint64_t *out);
+bool my_hash_map_get_char(MyHashMap *hash_map, ItemKey key, char *out);
+bool my_hash_map_get_int(MyHashMap *hash_map, ItemKey key, int *out);
+bool my_hash_map_get_double(MyHashMap *hash_map, ItemKey key, double *out);
+bool my_hash_map_get_string(MyHashMap *hash_map, ItemKey key, char **out);
+void my_hash_map_remove(MyHashMap *hash_map, ItemKey key);
+void my_hash_map_resize(MyHashMap *hash_map);
+double my_hash_map_get_load_factor(MyHashMap *hash_map);
 void my_hash_map_free(MyHashMap *hash_map);
-
-HashMapItem *create_hash_map_item(char *key, void *value);
-void hash_map_item_free(HashMapItem *item);
-
-// --------------------------------------------------------------------------------------
-
-static size_t djb2_hash(char *string)
-{
-    size_t hash = 5381;
-
-    int c;
-    while ((c = *string++))
-    {
-        hash = ((hash << 5) + hash) + c;
-    }
-
-    return hash;
-}
-
-static double get_load_factor(MyHashMap *hash_map) {
-    return (double)hash_map->item_count / hash_map->capacity;
-}
-
-static size_t get_index(size_t hash_code, size_t capacity) {
-    return hash_code & (capacity - 1);
-}
-
-static void resize_hash_map(MyHashMap *hash_map) {
-    size_t new_capacity = hash_map->capacity * 2;
-
-    MyListNode **new_buckets = (MyListNode **)calloc(new_capacity, sizeof(MyListNode *));
-    if (!new_buckets) {
-        return;
-    }
-
-    for (size_t i = 0; i < hash_map->capacity; i++) {
-        MyListNode **bucket = &hash_map->buckets[i];
-
-        while(my_linked_list_peek_front(*bucket)) {
-            HashMapItem *item = (HashMapItem *)my_linked_list_pop_front(bucket);
-
-            size_t hash_code = djb2_hash(item->key);
-            size_t index = get_index(hash_code, new_capacity);
-
-            my_linked_list_push(&new_buckets[index], item);
-        }
-    }
-
-    free(hash_map->buckets);
-
-    hash_map->capacity = new_capacity;
-    hash_map->buckets = new_buckets;
-}
-
-static HashMapItem *search_item(MyListNode *bucket, char *key)
-{
-    while (bucket)
-    {
-        HashMapItem *item = (HashMapItem *)(bucket->value);
-        if (strcmp(item->key, key) == 0)
-        {
-            return item;
-        }
-
-        bucket = bucket->next;
-    }
-
-    return NULL;
-}
-
-static bool remove_item(MyListNode **bucket, char *key)
-{
-    while (*bucket)
-    {
-        HashMapItem *item = (HashMapItem *)(*bucket)->value;
-        if (strcmp(item->key, key) == 0)
-        {
-            MyListNode *to_remove = *bucket;
-            *bucket = to_remove->next;
-            hash_map_item_free(item);
-            free(to_remove);
-            return true;
-        }
-
-        bucket = &((*bucket)->next);
-    }
-
-    return false;
-}
-
-// --------------------------------------------------------------------------------------
-
-HashMapItem *create_hash_map_item(char *key, void *value)
-{
-    HashMapItem *item = (HashMapItem *)malloc(sizeof(HashMapItem));
-    if (!item)
-    {
-        return NULL;
-    }
-
-    item->key = strdup(key);
-    if (!item->key)
-    {
-        free(item);
-        return NULL;
-    }
-
-    item->value = value;
-    return item;
-}
-
-void hash_map_item_free(HashMapItem *item)
-{
-    free(item->key);
-    free(item);
-}
-
-// --------------------------------------------------------------------------------------
-
-#define DEFAULT_CAPACITY 16
-#define RESIZE_THRESHOLD 0.7
-
-MyHashMap *create_my_hash_map()
-{
-    MyHashMap *hash_map = (MyHashMap *)malloc(sizeof(MyHashMap));
-    if (!hash_map)
-    {
-        return NULL;
-    }
-
-    hash_map->buckets = (MyListNode **)calloc(DEFAULT_CAPACITY, sizeof(MyListNode *));
-    if (!hash_map->buckets)
-    {
-        free(hash_map);
-        return NULL;
-    }
-
-    hash_map->capacity = DEFAULT_CAPACITY;
-    hash_map->item_count = 0;
-    return hash_map;
-}
-
-void my_hash_map_set(MyHashMap *hash_map, char *key, void *value)
-{
-    size_t hash_code = djb2_hash(key);
-    size_t index = get_index(hash_code, hash_map->capacity);
-    MyListNode **bucket = &hash_map->buckets[index];
-
-    HashMapItem *existing = search_item(*bucket, key);
-    if (existing)
-    {
-        existing->value = value;
-        return;
-    }
-
-    HashMapItem *item = create_hash_map_item(key, value);
-    if (!item)
-    {
-        return;
-    }
-
-    my_linked_list_push(bucket, item);
-    hash_map->item_count++;
-
-    if (get_load_factor(hash_map) >= RESIZE_THRESHOLD) {
-        resize_hash_map(hash_map);
-    }
-}
-
-void *my_hash_map_get(MyHashMap *hash_map, char *key)
-{
-    size_t hash_code = djb2_hash(key);
-    size_t index = get_index(hash_code, hash_map->capacity);
-    MyListNode *bucket = hash_map->buckets[index];
-    HashMapItem *item = search_item(bucket, key);
-    return item != NULL ? item->value : NULL;
-}
-
-void my_hash_map_remove(MyHashMap *hash_map, char *key)
-{
-    size_t hash_code = djb2_hash(key);
-    size_t index = get_index(hash_code, hash_map->capacity);
-    MyListNode **bucket = &hash_map->buckets[index];
-    if (remove_item(bucket, key))
-    {
-        hash_map->item_count--;
-    }
-}
-
-void my_hash_map_free(MyHashMap *hash_map)
-{
-    for (size_t i = 0; i < hash_map->capacity; i++)
-    {
-        my_linked_list_free(&hash_map->buckets[i], (void *)hash_map_item_free);
-    }
-
-    free(hash_map->buckets);
-    free(hash_map);
-}
 
 #endif

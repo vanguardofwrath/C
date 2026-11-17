@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define PATH_TO_FILE "C:\\Users\\Netanel Ojukwu\\Documents\\Projects\\C\\test_file.txt"
+#define PATH_TO_FILE "G://Personal Projects//C//test_file.txt"
 #define NUM_BYTE_VALUES 256
 #define BYTES_PER_CHUNK 1024
 #define INITIAL_HEAP_CAPACITY 16
@@ -123,6 +123,7 @@ void min_heap_print(MinHeap *min_heap) {
     if (min_heap->length == 0) {
         return;
     }
+
     for (uint64_t i = 0; i < min_heap->length; i++) {
         MinHeapNode *min_heap_node = min_heap->array[i];
         printf("[%zu] c:%c freq:%zu\n", i, min_heap_node->c, min_heap_node->frequency);
@@ -133,6 +134,7 @@ void min_heap_free(MinHeap *min_heap) {
     for (uint64_t i = 0; i < min_heap->length; i++) {
         min_heap_node_free(min_heap->array[i]);
     }
+
     free(min_heap);
 }
 
@@ -179,9 +181,14 @@ FileInfo read_file(const char *path_to_file) {
 
     fclose(file);
 
-    uint8_t *shrunken = realloc(data, total_bytes_read + 1);
+    if (total_bytes_read == 0) {
+        free(data);
+        return file_info;
+    }
+
+    uint8_t *shrunken = realloc(data, total_bytes_read);
     if (!shrunken) {
-        free(data);;
+        free(data);
         return file_info;
     }
 
@@ -199,7 +206,7 @@ void free_file_info(FileInfo file_info) {
 int main(int argc, char **argv)
 {
     FileInfo file_info = read_file(PATH_TO_FILE);
-    if (!file_info.data || file_info.size == 0) {
+    if (!file_info.data) {
         return EXIT_FAILURE;
     }
 
@@ -234,6 +241,8 @@ int main(int argc, char **argv)
         }
     }
 
+    printf("Reached loop to build huffman tree\n");
+
     while(min_heap->length > 1) {
         MinHeapNode *node1 = min_heap_extract_min(min_heap);
         MinHeapNode *node2 = min_heap_extract_min(min_heap);
@@ -250,11 +259,13 @@ int main(int argc, char **argv)
 
         merged->c = '\0';
         merged->frequency = node1->frequency + node2->frequency;
+        merged->left = node1;
+        merged->right = node2;
         min_heap_insert(min_heap, merged);
-
-        free(node1);
-        free(node2);
     }
+
+    MinHeapNode *root = min_heap->array[0];
+
 
     free_file_info(file_info);
     free(frequency_list);
